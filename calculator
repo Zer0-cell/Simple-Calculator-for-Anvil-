@@ -1,0 +1,104 @@
+from ._anvil_designer import Form1Template
+from anvil import *
+
+class Form1(Form1Template):
+    def __init__(self, **properties):
+        # Set Form properties and Data Bindings.
+        self.init_components(**properties)
+
+        # Create a hidden text box for capturing keyboard events
+        self.hidden_input = TextBox(visible=False)
+        self.add_component(self.hidden_input)
+
+        # Any code you write here will run before the form opens.
+        chars = ["1", "2", "3", "4", "Del", "AC",
+                 "5", "6", "7", "8", "+", "-",
+                 "9", "0", ".", "*", "/", "="]
+
+        self.button = {}
+        gp = GridPanel()
+
+        for idx, i in enumerate(chars):
+            if i == "=":
+                clr = '#00FF00'
+            elif i in ["AC", "Del"]:
+                clr = '#FFA500'
+            elif i in ['+', '-', '*', '/']:
+                clr = '#00FFFF'
+            else:
+                clr = '#ff00ea'
+
+            if idx < 6:
+                row = "A"
+            elif 6 <= idx < 12:
+                row = "B"
+            else:
+                row = "C"
+
+            self.button[i] = Button(text=i,
+                                    font="Poppins",
+                                    bold=True,
+                                    foreground="#000000",
+                                    background=clr)
+            self.button[i].tag.name = i
+            self.button[i].set_event_handler('click', self.click)
+            gp.add_component(self.button[i], row=row, col_xs=3, width_xs=1)
+
+        self.add_component(gp)
+
+        # Focus on the hidden input to capture keyboard input
+        self.hidden_input.focus()
+
+    def key_up(self, **event_args):
+        key = event_args['key']
+
+        # Mapping keyboard keys to button actions
+        key_mapping = {
+            '1': '1', '2': '2', '3': '3',
+            '4': '4', '5': '5', '6': '6',
+            '7': '7', '8': '8', '9': '9',
+            '0': '0', '+': '+', '-': '-',
+            '*': '*', '/': '/', '.': '.',
+            'Enter': '=', 'Backspace': 'Del',
+            'Escape': 'AC'
+        }
+
+        if key in key_mapping:
+            button_value = key_mapping[key]
+            if button_value == '=':
+                self.click(sender=self.button[button_value])
+            elif button_value == 'Del':
+                self.click(sender=self.button[button_value])
+            elif button_value == 'AC':
+                self.click(sender=self.button[button_value])
+            else:
+                # Simulate clicking the button
+                self.text_box_1.text += button_value
+
+    # The click method should be outside the __init__ method
+    def click(self, **event_args):
+        val = event_args["sender"].tag.name
+
+        if val == "=":
+            try:
+                # Evaluate the expression and set the text box content
+                self.text_box_1.text = str(eval(self.text_box_1.text))
+            except Exception as e:
+                self.text_box_1.text = "Error"
+        elif val == "AC":
+            # Clear the text box
+            self.text_box_1.text = ""
+        elif val == "Del":
+            # Delete the last character
+            self.text_box_1.text = self.text_box_1.text[:-1]
+        else:
+            # Append the clicked button's value to the text box
+            self.text_box_1.text += val
+
+    def form_show(self, **event_args):
+        # Focus on the hidden input to capture keyboard input when the form is shown
+        self.hidden_input.focus()
+
+    def key_up_handler(self, **event_args):
+        # This method will be called when a key is pressed
+        self.key_up(**event_args)
